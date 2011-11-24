@@ -1,18 +1,20 @@
 .bss
-	snakex: .space 400
-	snakey: .space 400
+	snakex: 		.space 400
+	snakey: 		.space 400
+	applesx:		.space 40
+	applesy:		.space 40
 .data
-	running: .short 1
-	dir:	 .short 1
+	running: 		.long 1
+	dir:	 		.long 1
 	
-	loopCount: .long 0
-	adressX: .long 0
-	adressY: .long 0
+	loopCount: 		.long 0
+	adressX: 		.long 0
+	adressY: 		.long 0
 	
-	posX: .long 0
-	posY: .long 0
-	
-	temp: .long 21
+	posX: 			.long 0
+	posY: 			.long 0
+	nrOfApples:		.long 10
+	temp: 			.long 20
 	
 .section .text	
 	.globl main
@@ -32,14 +34,15 @@ initLoop:
 	je init2
 	
 	movl adressX, %ebx
-	movl $50, %eax
+	movl $-1, %eax
 	movl %eax, (%ebx)
 	addl $4, adressX
 	
 	movl adressY, %ebx
-	movl temp, %eax
+	movl $-1, %eax
 	movl %eax, (%ebx)
 	addl $4, adressY
+	
 	addl $1, temp
 
 	addl $1, loopCount
@@ -49,7 +52,56 @@ initLoop:
 init2:
 	movl $50, snakex
 	movl $20, snakey
-	jmp gameLoop
+	
+	movl $snakex, adressX
+	movl $snakey, adressY
+
+	movl $0, loopCount
+	movl $20, temp
+initLoop2:
+	cmpl $5, loopCount
+	je init3
+	
+	movl adressX, %ebx
+	movl $50, %eax
+	movl %eax, (%ebx)
+	addl $4, adressX
+	
+	movl adressY, %ebx
+	movl temp, %eax
+	movl %eax, (%ebx)
+	addl $4, adressY
+	
+	addl $1, temp
+
+	addl $1, loopCount
+	
+	jmp initLoop2
+
+init3:
+	#Initialize apples
+	movl $applesx, adressX
+	movl $applesy, adressY
+
+	movl $0, loopCount
+init3Loop:
+	cmpl $10, loopCount
+	je gameLoop
+	
+	movl adressX, %ebx
+	movl $-1, %eax
+	movl %eax, (%ebx)
+	addl $4, adressX
+	
+	movl adressY, %ebx
+	movl $-1, %eax
+	movl %eax, (%ebx)
+	addl $4, adressY
+
+	addl $1, loopCount
+	
+	jmp init3Loop
+	#initialize apples
 
 gameLoop:
 	pushl $200000
@@ -63,14 +115,12 @@ gameLoop:
 	call tick
 jumpback:
 	call update
-	
 	call move
 jumpback2:
 	call render
 	
 exit:
-	call endwin
-	ret
+	call nib_end
 	
 move:
 	movl $99, loopCount
@@ -86,13 +136,13 @@ move:
 	subl $4, adressX
 	subl $4, adressY
 	
-	movl adressX, %ebx													#X
+	movl adressX, %ebx													
 	movl (%ebx), %eax
 	cmpl $-1, %eax
 	je lp1
 	movl adressX, %ecx
 	subl $4, %ecx
-	movl (%ecx), %edx	#X
+	movl (%ecx), %edx	
 	movl %edx, (%ebx)
 	
 	movl adressY, %ebx													
@@ -105,7 +155,7 @@ move:
 	movl %edx, (%ebx)
 	
 	jmp lp1
-
+	
 	continue:
 	cmpl $1, dir
 	je moveUp
@@ -115,28 +165,79 @@ move:
 	je moveDown
 	cmpl $4,dir
 	je moveRight
-	
-	//move heeeead!
-	
-	jmp jumpback2
 
 moveUp:
 	subl $1, snakey
-	jmp jumpback2
+	jmp collission
 moveDown:
 	addl $1, snakey
-	jmp jumpback2
+	jmp collission
 
 moveLeft:
 	subl $1, snakex
-	jmp jumpback2
+	jmp collission
 
 moveRight:
 	addl $1, snakex
-	jmp jumpback2
+	jmp collission
+
+collission:
+	movl $0, loopCount
+	movl $snakex, adressX
+	movl $snakey, adressY
+
+collissionLoop:
+	cmpl $100, loopCount
+	je jumpback2
+	
+	addl $1, loopCount
+	addl $4, adressX
+	addl $4, adressY
+	
+	movl adressX, %ebx
+	movl (%ebx), %eax
+	cmpl %eax, snakex
+	jne collissionLoop
+	
+	movl adressY, %ebx
+	movl (%ebx), %eax
+	cmpl %eax, snakey
+	jne collissionLoop
+	
+	jmp exit
 	
 render:
+
+	movl $0, loopCount
+	movl $applesx, adressX
+	movl $applesy, adressY
 	
+appleRenderLoop:
+	cmpl $10, loopCount
+	je renderSnake
+	
+	
+	movl adressX, %ebx
+	movl (%ebx), %eax
+	movl %eax, posX
+	
+	movl adressY, %ebx
+	movl (%ebx), %eax
+	movl %eax, posY
+	
+	pushl $111
+	pushl posY
+	pushl posX
+	call nib_put_scr
+	addl $12, %esp
+	
+	addl $4, adressX
+	addl $4, adressY
+	addl $1, loopCount
+	
+	jmp appleRenderLoop
+
+renderSnake:
 	movl $0, loopCount
 	movl $snakex, adressX
 	movl $snakey, adressY
@@ -171,7 +272,7 @@ l1:
 	#jmp gameLoop
 	
 tick:
-	call nib_poll_kbd													#the int-return is delivered to %eax
+	call nib_poll_kbd
 	cmpl $97, %eax
 	je left
 	cmpl $119, %eax
@@ -182,17 +283,59 @@ tick:
 	je down
 inputfinished:
 	
-	jmp jumpback
+	#Update apples
+	movl $applesx, adressX
+	movl $applesy, adressY
+	
+	subl $4, adressX
+	subl $4, adressY
+
+	movl $0, loopCount
+appleLoop:
+	cmpl $10, loopCount
+	je jumpback
+	
+	addl $1, loopCount
+	addl $4, adressX
+	addl $4, adressY
+	
+	movl adressX, %ebx
+	cmpl $-1, (%ebx)
+	jne appleLoop
+	
+	#spawn granny smith
+	call rand_x
+	movl adressX, %ebx
+	movl %eax,  (%ebx)
+	
+	call rand_y
+	movl adressY, %ebx
+	movl %eax,  (%ebx)
+	
+	jmp appleLoop
+	#Update apples
 
 left:
+	cmpl $4, dir
+	je inputfinished
+	
 	movl $2, dir
 	jmp inputfinished
 right:
+	cmpl $2, dir
+	je inputfinished
+
 	movl $4, dir
 	jmp inputfinished
 up:
+	cmpl $3, dir
+	je inputfinished
+
 	movl $1, dir
 	jmp inputfinished
 down:
+	cmpl $1, dir
+	je inputfinished
+
 	movl $3, dir
 	jmp inputfinished
