@@ -8,6 +8,9 @@
 	dir:	 		.long 1
 	
 	loopCount: 		.long 0
+	loopCount2:		.long 0
+	adressX2:		.long 0
+	adressY2:		.long 0
 	adressX: 		.long 0
 	adressY: 		.long 0
 	
@@ -182,6 +185,93 @@ moveRight:
 	jmp collission
 
 collission:
+
+#Collission with walls
+	cmpl $0, snakex
+	je exit
+	cmpl $100, snakex
+	je exit
+	cmpl $0, snakey
+	je exit
+	cmpl $40, snakey
+	je exit
+#Collission with walls
+
+#Collission of apples
+	movl $0, loopCount
+	movl $applesx, adressX
+	movl $applesy, adressY
+	subl $4, adressX
+	subl $4, adressY
+	
+collissionApple:
+	cmpl $10, loopCount
+	je collissionSnake
+	
+	addl $1, loopCount
+	addl $4, adressX
+	addl $4, adressY
+	
+	movl adressX, %ebx
+	movl (%ebx), %eax
+	cmpl snakex, %eax
+	jne collissionApple
+	
+	movl adressY, %ebx
+	movl (%ebx), %eax
+	cmpl snakey, %eax
+	jne collissionApple
+	
+	movl $-1, (%ebx)
+	movl adressX, %ebx
+	movl $-1, (%ebx)
+	
+	movl $0, loopCount2
+	movl $snakex, adressX2
+	movl $snakey, adressY2
+	subl $4, adressX2
+	subl $4, adressY2
+growSnake:
+	cmpl $99, loopCount2
+	je collissionApple
+	
+	addl $1, loopCount2
+	addl $4, adressX2
+	addl $4, adressY2
+	
+	#find -1
+	movl adressX2, %ebx
+	movl (%ebx), %eax
+	cmpl $-1, %eax
+	jne growSnake
+	#find -1
+	
+	#add piece of snake
+	movl adressX2, %eax
+	movl %eax, posX
+	movl adressY2, %eax
+	movl %eax, posY
+	
+	subl $4, adressX2
+	subl $4, adressY2
+	
+	movl adressX2, %eax
+	movl (%eax), %ecx
+	movl posX, %ebx
+	movl %ecx, (%ebx)
+	
+	movl adressY2, %eax
+	movl (%eax), %ecx
+	movl posY, %ebx
+	movl %ecx, (%ebx)
+	
+	jmp collissionApple
+	#add piece of snake
+	
+	jmp collissionApple
+	
+#Collission of apples
+collissionSnake:
 	movl $0, loopCount
 	movl $snakex, adressX
 	movl $snakey, adressY
