@@ -26,6 +26,19 @@ int nib_poll_kbd(void)
   return key;
 }
 
+int rand_x()
+{
+	int random;
+	random = rand()%99;
+	return random + 1;
+}
+int rand_y()
+{
+	int random;
+	random = rand()%39;
+	return random + 1;
+}
+
 void nib_put_scr(int x, int y, int ch)
 {
   //mvprintw(y, x, "%c", ch);
